@@ -2,8 +2,6 @@
 title: API Reference
 
 language_tabs: # must be one of https://git.io/vQNgJ
-  - shell
-  - ruby
   - python
   - javascript
 
@@ -20,133 +18,113 @@ code_clipboard: true
 
 meta:
   - name: description
-    content: Documentation for the Kittn API
+    content: Documentation for the bashCoin API (websocket messages)
 ---
 
 # Introduction
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
+Welcome to bashCoin blockchain project. Here we share basic API message formats. Actually this is not API. Project uses Websocket message formats to exchange information. 
 
-We have language bindings in Shell, Ruby, Python, and JavaScript! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
 
-This example API documentation page was created with [Slate](https://github.com/slatedocs/slate). Feel free to edit it and use it as a base for your own API's documentation.
 
 # Authentication
 
-> To authorize, use this code:
+> No API-KEY required.
 
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-```
 
 ```python
-import kittn
+import OpenSSL
+from OpenSSL import crypto
+import base64
+key_file = open("key.pem", "r")
+key = key_file.read()
+key_file.close()
+password = b'alice'
 
-api = kittn.authorize('meowmeowmeow')
+if key.startswith('-----BEGIN '):
+    pkey = crypto.load_privatekey(crypto.FILETYPE_PEM, key, password)
+else:
+    pkey = crypto.load_pkcs12(key, password).get_privatekey()
+
+fullMessage={"command": "getTransactionMessageForSign", "status": 0, "destinationSocket": "2", "result": {"forReciverData": "<pubKeyHashSender>:<pubKeyHashReciever>:5:3:202111121313", "forSenderData": "<pubKeyHashSender>:<pubKeyHashSender>:38:0:202111121313"}}
+
+data=fullMessage['result']['forReciverData']+"\n"
+sign = OpenSSL.crypto.sign(pkey, data, "sha256")
+data_base64 = base64.b64encode(sign)
+pub=base64.b64encode(pubFile)
+
 ```
 
 ```shell
-# With shell, you can just pass the correct header with each request
-curl "api_endpoint_here" \
-  -H "Authorization: meowmeowmeow"
+# HERE WILL BE WSDUMP related
 ```
 
 ```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
+NOT DEFINED
 ```
 
-> Make sure to replace `meowmeowmeow` with your API key.
+> No API-KEY required.
 
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
-
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
-
-`Authorization: meowmeowmeow`
+There is no special authentication mechanism for this blockchain. All data is transparent and signed by peers. We only need to generate our pub/priv key pair and sign messages to the chain. 
 
 <aside class="notice">
-You must replace <code>meowmeowmeow</code> with your personal API key.
+no API key.
 </aside>
 
-# Kittens
+# bashCoin
 
-## Get All Kittens
+## Mine. 
 
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
 
 ```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
+python wsdump.py ws://127.0.0.1:8001/
+> {"command": "mine", "appType": "miner", "messageType": "direct"}
 ```
 
 ```shell
-curl "http://example.com/api/kittens" \
-  -H "Authorization: meowmeowmeow"
+cd bin/
+./bashCoin.sh '{"command": "mine", "appType": "miner", "messageType": "direct"}'
 ```
 
 ```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let kittens = api.kittens.get();
+not defined
 ```
 
 > The above command returns JSON structured like this:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
-  },
-  {
-    "id": 2,
-    "name": "Max",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
-  }
-]
+{
+  "command": "notification",
+  "commandCode": "100",
+  "appType": "miner",
+  "messageType": "broadcast",
+  "status": "0",
+  "timeUTC": "20211124195158",
+  "difficulty": "1",
+  "MINEDBLOCK": "161.blk.solved",
+  "NEXTBLOCK": "162.blk"
+}
 ```
 
-This endpoint retrieves all kittens.
+This endpoint retrieves json data.
 
-### HTTP Request
+### WS Request
 
-`GET http://example.com/api/kittens`
+`ws.send()`
 
 ### Query Parameters
 
-Parameter | Default | Description
+Parameter | value | Description
 --------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
+command | mine | sends command name to execute bashCoin.sh
+messageType | direct | means no broadcast. send directly to local app from localhost
+
 
 <aside class="success">
-Remember — a happy kitten is an authenticated kitten!
+Remember — "status":0
 </aside>
 
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
+## Send coin to other PubKeyHash
 
 ```python
 import kittn
@@ -179,13 +157,14 @@ let max = api.kittens.get(2);
 }
 ```
 
-This endpoint retrieves a specific kitten.
+This endpoint retrieves json data.
 
-<aside class="warning">Inside HTML code blocks like this one, you can't use Markdown, so use <code>&lt;code&gt;</code> blocks to denote code.</aside>
+
+<aside class="warning">if status is not 0 means ERROR</aside>
 
 ### HTTP Request
 
-`GET http://example.com/kittens/<ID>`
+`ws.send()`
 
 ### URL Parameters
 
